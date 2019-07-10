@@ -1,0 +1,383 @@
+<html><head>
+<meta http-equiv="X-UA-Compatible" content="IE=5">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage Express 2.0">
+<title>PS/2 to Atom Matrix Keyboard Interface</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1><font color="#0000FF">The PS/2 to Atom Matrix Keyboard
+Interface</font></h1>
+
+<p>The keyboard interface maps PS/2 keyboard signals to a
+simulated crosspoint matrix in the FPGA. This ensures existing
+software that reads the matrix directly will still run. If this
+project were only to run new software, this matrix might be
+dispensed with and the OSRDCH routine modified to read PS/2
+keyboard bytes directly. Full size PS/2 keyboards are
+significantly larger than the prototype board, and you might want
+to be able to read a real key matrix with fewer or smaller keys.
+This is also a practical design modification.</p>
+
+<p>The keyboard sometimes misses characters when typing at my
+usual speed. I remember my original atom did that too, and I had
+put it down to key contact corrosion (a common fault on early
+versions). However I now believe it may be due to the firmware
+not being able to resolve rapid keyboard changes.</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF"><strong>The Atom's Keyboard Matrix</strong></font></h2>
+
+<table cellpadding="3" border="0">
+    <tbody><tr>
+        <td bgcolor="#0000FF" align="center"><font color="#FFFFFF"><strong>Row</strong></font></td>
+        <td>&nbsp;</td>
+        <td colspan="8" bgcolor="#0000FF" align="center"><font color="#FFFFFF"><strong>Data (read)</strong></font></td>
+    </tr>
+    <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>7</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>6</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>5</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>4</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>3</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>2</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>1</strong></font></td>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>0</strong></font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>0</strong></font></td>
+        <td>&nbsp;</td>
+        <td rowspan="10" bgcolor="#C0C0C0"><font face="Courier New">s<br>
+        h<br>
+        i<br>
+        f<br>
+        t</font></td>
+        <td rowspan="10" bgcolor="#C0C0C0"><font face="Courier New">c<br>
+        t<br>
+        r<br>
+        l</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">ESC</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">Q</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">G</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">- </font><font face="Courier New" color="#FF0000">=</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">3 </font><font face="Courier New" color="#FF0000">#</font></td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>1</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">Z</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">P</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">F</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">, &lt;</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">2 "</font></td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>2</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">Y</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">O</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">E</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">; </font><font face="Courier New" color="#FF0000">+</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">1 !</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New"><img src="PS_2%20to%20Atom%20Matrix%20Keyboard%20Interface_files/updown.gif" width="9" height="24"></font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>3</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">X</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">N</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">D</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New" color="#FF0000">: *</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">0</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New"><img src="PS_2%20to%20Atom%20Matrix%20Keyboard%20Interface_files/leftright.gif" width="24" height="9"></font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>4</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">W</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">M</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">C</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">9 </font><font face="Courier New" color="#FF0000">)</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">del</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">lock</font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>5</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">V</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">L</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">B</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">8 </font><font face="Courier New" color="#FF0000">(</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">copy</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">up</font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>6</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">U</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">K</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">A</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">7 </font><font face="Courier New" color="#FF0000">'</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">ret</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">]</font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>7</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">T</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">J</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New" color="#FF0000">@</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">6 </font><font face="Courier New" color="#FF0000">&amp;</font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">\</font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>8</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">S</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">I</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">/ ?</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">5 %</font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">[</font></td>
+    </tr>
+    <tr>
+        <td bgcolor="#00FFFF"><font face="Courier New"><strong>9</strong></font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">R</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">H</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">. &gt;</font></td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">4 $</font></td>
+        <td>&nbsp;</td>
+        <td bgcolor="#C0C0C0"><font face="Courier New">sp</font></td>
+    </tr>
+</tbody></table>
+
+<p>The Atom reads the keyboard data from memory mapped I/O, as 10
+rows of 6 columns.<br>
+Where there are two characters shown the second is the shifted
+character.<br>
+Characters that may cause trouble due to PS/2 keyboard
+incompatibilities are coloured red.<br>
+The row is selected by writing to the 6502's memory-mapped 8255
+port A at address <font face="Courier New">0xB000</font>.<br>
+The data are read selected by reading to the 8255 port B at
+address <font face="Courier New">0xB001</font>.</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF"><strong>PS/2 Scan code to Atom Matrix
+conversion</strong></font></h2>
+
+<table border="0">
+    <tbody><tr>
+        <td rowspan="3" bgcolor="#00FFFF" align="center">PC <br>
+        kbd</td>
+        <td>--&gt;</td>
+        <td rowspan="3" bgcolor="#00FF00" align="center">PS/2 <br>
+        interface</td>
+        <td align="center">-scan-code-&gt;</td>
+        <td bgcolor="#00FF00" align="center">FIFO</td>
+        <td align="center">-&gt;</td>
+        <td bgcolor="#00FF00" align="center">Atom Keyboard<br>
+        Matrix Encoder</td>
+        <td>&lt;-- 4-bit row addr<br>
+        --&gt; 6-bit row data<br>
+        --&gt; 2-bit shift and ctrl</td>
+        <td rowspan="3" bgcolor="#00FF00">Atom <br>
+        8255<br>
+        chip</td>
+    </tr>
+    <tr>
+        <td>&nbsp;</td>
+        <td align="center">&nbsp;</td>
+        <td align="center">&nbsp;</td>
+        <td align="center">&nbsp;</td>
+        <td align="center">&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td>&lt;--</td>
+        <td align="center">&lt;-control-codes-</td>
+        <td bgcolor="#00FF00" align="center">&nbsp;</td>
+        <td align="center">&lt;--</td>
+        <td bgcolor="#00FFFF" align="center">encoder</td>
+        <td>&lt;-- status for LEDs</td>
+    </tr>
+</tbody></table>
+
+<p>At the moment, only keyboard transmission is implemented. So
+the keyboard LEDs are inactive.</p>
+
+<p>The resaon for this is because adding the extra direction is
+more work than I feel it is worth for a feature that isn't really
+that useful.</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF"><strong>Code Interfacing</strong></font></h2>
+
+<p>The PS/2 code to Atom matrix is like so (all codes in hex)<br>
+s indicates the state of the PC's shift key<br>
+--- indicates no matrix position.</p>
+
+<pre>	PS/2	Ascii	Matrix (S=shift, C=bit column, R=byte row
+Shift	scan	char	Atom SRC
+s	66	08	???	// Backspace ("backspace" key)
+s	0d	09	???	// Horizontal Tab
+s	5a	0d	s61	// Carriage return ("enter" key)
+s	76	1b	s05	// Escape ("esc" key)
+s	29	20	s90	// Space
+1	16	21	121	// !
+1	52	22	111	// "
+1	26	23	101	// #
+1	25	24	192	// $
+1	2e	25	182	// %
+1	3d	26	172	// &amp;
+0	52	27	---	// ' (under the @ key)
+1	46	28	152	// (
+1	45	29	142	// )
+1	3e	2a	132	// *
+1	55	2b	122	// +
+0	41	2c	012	// ,
+0	4e	2d	002	// -
+0	49	2e	093	// .
+0	4a	2f	083	// /
+0	45	30	031	// 0
+0	16	31	021	// 1
+0	1e	32	011	// 2
+0	26	33	001	// 3
+0	25	34	092	// 4
+0	2e	35	082	// 5
+0	36	36	072	// 6
+0	3d	37	062	// 7
+0	3e	38	052	// 8
+0	46	39	042	// 9
+1	4c	3a	032	// :
+0	4c	3b	022	// ;
+1	41	3c	112	// &lt;
+0	55	3d	102	// =
+1	49	3e	193	// &gt;
+1	4a	3f	183	// ?</pre>
+
+<pre>1	1e	40	073	// @
+1	1c	41	063	// A
+1	32	42	053	// B
+1	21	43	043	// C
+1	23	44	033	// D
+1	24	45	023	// E
+1	2b	46	013	// F
+1	34	47	003	// G
+1	33	48	094	// H
+1	43	49	084	// I
+1	3b	4a	074	// J
+1	42	4b	064	// K
+1	4b	4c	054	// L
+1	3a	4d	044	// M
+1	31	4e	034	// N
+1	44	4f	024	// O
+1	4d	50	014	// P
+1	15	51	004	// Q
+1	2d	52	095	// R
+1	1b	53	085	// S
+1	2c	54	075	// T
+1	3c	55	065	// U
+1	2a	56	055	// V
+1	1d	57	045	// W
+1	22	58	035	// X
+1	35	59	025	// Y
+1	1a	5a	015	// Z</pre>
+
+<pre>0	54	5b	s60	// [
+0	5d	5c	s50	// \
+0	5b	5d	s40	// ]
+1	36	5e	s--	// ^ (Not on Atom)
+1	4e	5f	s--	// _ (Not on Atom)
+0	0e	60	s--	// ` (left of the '1' key). (Not on Atom)</pre>
+
+<pre>0	1c	61	173	// a
+0	32	62	163	// b
+0	21	63	153	// c
+0	23	64	143	// d
+0	24	65	133	// e
+0	2b	66	123	// f
+0	34	67	113	// g
+0	33	68	194	// h
+0	43	69	184	// i
+0	3b	6a	174	// j
+0	42	6b	164	// k
+0	4b	6c	154	// l
+0	3a	6d	144	// m
+0	31	6e	134	// n
+0	44	6f	124	// o
+0	4d	70	114	// p
+0	15	71	104	// q
+0	2d	72	195	// r
+0	1b	73	185	// s
+0	2c	74	175	// t
+0	3c	75	165	// u
+0	2a	76	155	// v
+0	1d	77	145	// w
+0	22	78	135	// x
+0	35	79	125	// y
+0	1a	7a	115	// z</pre>
+
+<pre>1	54	7b	s--	// { (Not on Atom)
+1	5d	7c	s--	// | (Not on Atom)
+1	5b	7d	s--	// } (Not on Atom)
+1	0e	7e	s--	// ~ (Not on Atom)
+s	71	7f	s41	// (Delete OR DEL on numeric keypad)
+				// Specials:
+X	F0			// Indicates the next key code is for the key release</pre>
+
+<p>The PC defaults to lower case a-z, and the shift key produces
+upper-case.<br>
+The Atom defaults to upper case A-Z, and the shift key produces
+inverted A-Z.<br>
+Thus the PC's shift sense has to be inverted for these
+characters.</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF"><strong>Historical aside</strong></font></h2>
+
+<p>The keyboard was the starting point for the whole project. My
+original Atom keyboard was frequently missing keys, presumably
+due to age and tarnished switch contacts. Equivalent key switches
+are not individually expensive, but a whole keyboard of them are
+about £50, more than the Atom is worth. And certainly way more
+than a common PC keyboard. You can get one of those cheaper than
+a primitive 4x4 pad of key switches!</p>
+
+<p>I looked at making generic PS/2 to matrix interface. A lot of
+other old equipment with matrix keyboards might also find this
+useful.</p>
+
+<p>I thought of making a device to simply connect the FPGA to the
+matrix at the Atom's 8255 I/O pins. That's about 18 pins. Then I
+thought a better way might be to implement the 8255 chip in VHDL,
+and simply connect to the data bus and chip select. This uses
+fewer pins. The 8255 is capable of three modes of operation and
+programmable direction, but the Atom uses the 8255 in mode zero -
+simple I/O - and the I/O directions are fixed. So the complexity
+of the 8255 in the Atom can be reduced to 24 simple I/O signals
+within the FPGA, and not all of them need to physical I/O pins.</p>
+
+<p>These approaches still need cobbling to the Atom with bits of
+wire. How could this be done with the least inelegance?</p>
+
+<p>Eventually I felt there were so many things that could be
+improved: all of the digital TTL logic could be easily done in
+programmable logic, many small memory chips replaced with big
+ones, and the increasingly rare 6847 had significant
+shortcomings. This reasoning led me to believe it would be most
+elegant to pack all but the CPU and memory into a single FPGA.</p>
+
+
+</body></html>
